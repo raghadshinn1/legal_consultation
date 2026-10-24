@@ -36,6 +36,7 @@ class User
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if (password_verify($password, $row['password'])) {
                 session_start();
                 $_SESSION['user_id'] = $row['id'];
@@ -48,7 +49,12 @@ class User
         }
         return false;
     }
+    public function getlawyers(): array
+    {
+        $query = "SELECT id, name, email FROM " . $this->table . " WHERE role = 'lawyer'";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
 }
-
-?>
