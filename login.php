@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         body {
-            background-color: #f4f7f6;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -39,88 +39,122 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .card {
             background: #ffffff;
-            padding: 40px 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 45px 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        .card h2 {
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 24px;
+        .brand-header {
             text-align: center;
+            margin-bottom: 28px;
         }
 
-        .card p.subtitle {
-            color: #7f8c8d;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 25px;
+        .brand-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #eff6ff;
+            color: #1e40af;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 14px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1);
+        }
+
+        .brand-icon svg {
+            width: 26px;
+            height: 26px;
+            fill: currentColor;
+        }
+
+        .brand-header h1 {
+            color: #1e293b;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin-bottom: 4px;
+        }
+
+        .brand-header p {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         .alert-message {
-            background-color: #ffeeef;
-            color: #ef4444;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 20px;
+            background-color: #fef2f2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 22px;
             text-align: center;
             border: 1px solid #fecaca;
+            font-weight: 500;
         }
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 6px;
-            color: #34495e;
-            font-size: 14px;
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 13px;
             font-weight: 600;
         }
 
         .form-group input {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #dcdfe6;
-            border-radius: 6px;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
             font-size: 14px;
             outline: none;
-            background-color: #fff;
-            transition: border-color 0.2s ease;
+            background-color: #f8fafc;
+            color: #0f172a;
+            transition: all 0.2s ease;
         }
 
         .form-group input:focus {
             border-color: #2563eb;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
         .btn-submit {
             width: 100%;
-            padding: 12px;
-            background-color: #2563eb;
+            padding: 13px;
+            background-color: #1e40af;
             color: #ffffff;
             border: none;
-            border-radius: 6px;
-            font-size: 15px;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s ease;
-            margin-top: 10px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            margin-top: 6px;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
         }
 
         .btn-submit:hover {
-            background-color: #1d4ed8;
+            background-color: #1e3a8a;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.99);
         }
 
         .footer-text {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 24px;
             font-size: 13px;
-            color: #6b7280;
+            color: #64748b;
         }
 
         .footer-text a {
@@ -138,8 +172,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
 
     <div class="card">
-        <h2>Welcome Back</h2>
-        <p class="subtitle">Log in to your account</p>
+        <div class="brand-header">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+            </div>
+            <h1>Legal Consultation System</h1>
+            <p>Sign in to your professional account</p>
+        </div>
 
         <?php if (!empty($message)): ?>
             <div class="alert-message">
@@ -150,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form action="login.php" method="POST">
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="example@mail.com" required>
+                <input type="email" id="email" name="email" placeholder="name@example.com" required>
             </div>
 
             <div class="form-group">
@@ -158,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <input type="password" id="password" name="password" placeholder="••••••••" required>
             </div>
 
-            <button type="submit" class="btn-submit">Log In</button>
+            <button type="submit" class="btn-submit">Sign In</button>
         </form>
 
         <div class="footer-text">

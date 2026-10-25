@@ -19,13 +19,26 @@ $stmt = $db->prepare("SELECT name FROM users WHERE id = :id");
 $stmt->execute([':id' => $userId]);
 $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
 $userName = $currentUser['name'] ?? 'User';
+
+if ($role === 'client') {
+    $stmtAppr = $db->prepare("SELECT consultations.*, users.name AS lawyer_name FROM consultations JOIN users ON consultations.lawyer_id = users.id WHERE consultations.client_id = :client_id AND consultations.status = 'Accepted' ORDER BY consultations.created_at DESC");
+    $stmtAppr->execute([':client_id' => $userId]);
+} else {
+    $stmtAppr = $db->prepare("SELECT consultations.*, users.name AS client_name FROM consultations JOIN users ON consultations.client_id = users.id WHERE consultations.lawyer_id = :lawyer_id AND consultations.status = 'Accepted' ORDER BY consultations.created_at DESC");
+    $stmtAppr->execute([':lawyer_id' => $userId]);
+}
+$approvedConsultations = $stmtAppr->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Legal Portal</title>
+    <?php if ($role === 'lawyer'): ?>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <?php endif; ?>
     <style>
         * {
             box-sizing: border-box;
@@ -48,6 +61,10 @@ $userName = $currentUser['name'] ?? 'User';
             flex-direction: column;
             justify-content: space-between;
             padding: 25px 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            flex-shrink: 0;
         }
 
         .sidebar-brand h3 {
@@ -130,13 +147,14 @@ $userName = $currentUser['name'] ?? 'User';
             color: #64748b;
             font-size: 15px;
             line-height: 1.6;
+            margin-bottom: 25px;
         }
 
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
-            margin-top: 30px;
+            margin-bottom: 35px;
         }
 
         .card {
@@ -165,8 +183,124 @@ $userName = $currentUser['name'] ?? 'User';
             font-size: 13px;
             color: #64748b;
         }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        @media (max-width: 992px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .chart-card h3 {
+            font-size: 16px;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+
+        .stats-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .stat-item {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #2563eb;
+        }
+
+        .stat-item span {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-item h4 {
+            font-size: 20px;
+            color: #1e293b;
+            margin-top: 2px;
+        }
+
+        .approved-section {
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 25px;
+        }
+
+        .approved-section h3 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        td {
+            color: #475569;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background-color: #ecfdf5;
+            color: #059669;
+            display: inline-block;
+        }
+
+        .empty-row {
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="sidebar">
@@ -227,6 +361,90 @@ $userName = $currentUser['name'] ?? 'User';
                     <h4>Profile Settings</h4>
                     <p>Update your personal account details, name, and email address.</p>
                 </a>
+            </div>
+
+            <?php if ($role === 'lawyer'): ?>
+            <div class="analytics-grid">
+                <div class="chart-card">
+                    <h3>Consultations Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="consultationChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card stats-box">
+                    <div class="stat-item">
+                        <span>Total Accepted</span>
+                        <h4><?php echo count($approvedConsultations ?? []); ?></h4>
+                    </div>
+                </div>
+            </div>
+            <script>
+                const ctx = document.getElementById('consultationChart').getContext('2d');
+                const consultationChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Consultations',
+                            data: [2, 5, 3, 7, 4, <?php echo count($approvedConsultations ?? []); ?>],
+                            backgroundColor: '#2563eb',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            </script>
+            <?php endif; ?>
+
+            <div class="approved-section">
+                <h3><?php echo ($role === 'lawyer') ? 'My Accepted Client Requests' : 'My Approved Consultations'; ?></h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th><?php echo ($role === 'lawyer') ? 'Client Name' : 'Lawyer Name'; ?></th>
+                                <th>Subject</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($approvedConsultations)): ?>
+                                <?php foreach ($approvedConsultations as $appr): ?>
+                                    <tr>
+                                        <td><?php echo $appr['id']; ?></td>
+                                        <td><?php echo htmlspecialchars(($role === 'lawyer') ? ($appr['client_name'] ?? 'Unknown') : ($appr['lawyer_name'] ?? 'Unknown')); ?></td>
+                                        <td><?php echo htmlspecialchars($appr['subject']); ?></td>
+                                        <td><?php echo htmlspecialchars($appr['description']); ?></td>
+                                        <td><span class="badge">Accepted</span></td>
+                                        <td><?php echo $appr['created_at']; ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" class="empty-row">No approved consultations found.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
